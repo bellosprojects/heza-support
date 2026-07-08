@@ -1,0 +1,222 @@
+{
+  "Heza Snippets": {
+    "prefix": "heza",
+    "body": [],
+    "description": "Snippets para Heza"
+  },
+  "Sumatoria (∑)": {
+    "prefix": "summation",
+    "body": "∑(${1:i} ∈ ${2:conjunto}, ${3:expresion})",
+    "description": "Sumatoria: ∑(i ∈ conjunto, expresion)"
+  },
+  "Productoria (Π)": {
+    "prefix": "product",
+    "body": "∏(${1:i} ∈ ${2:conjunto}, ${3:expresion})",
+    "description": "Productoria: Π(i ∈ conjunto, expresion)"
+  },
+  "Integral definida": {
+    "prefix": "integral",
+    "body": "∫ ${1:desde}..${2:hasta}: ${3:expresion} d${4:x}",
+    "description": "Integral definida: ∫ desde..hasta: f(x) dx"
+  },
+  "Integral indefinida": {
+    "prefix": "integral-indef",
+    "body": "∫ ${1:expresion} d${2:x}",
+    "description": "Integral indefinida: ∫ f(x) dx"
+  },
+  "Derivada": {
+    "prefix": "derivative",
+    "body": "d(${1:expresion})/d${2:x}",
+    "description": "Derivada: d(f)/dx"
+  },
+  "Límite": {
+    "prefix": "limit",
+    "body": "lim(${1:expresion}, ${2:x} → ${3:valor})",
+    "description": "Límite: lim(f, x → a)"
+  },
+  "Tiende (→)": {
+    "prefix": "tends",
+    "body": "→",
+    "description": "Tiende a: →"
+  },
+  "Agregar (→)": {
+    "prefix": "add",
+    "body": "←",
+    "description": "Agregar a: ←"
+  },
+  "Pertenece (∈)": {
+    "prefix": "in",
+    "body": "∈",
+    "description": "Pertenece a: ∈"
+  },
+  "No pertenece (∉)": {
+    "prefix": "notin",
+    "body": "∉",
+    "description": "No pertenece a: ∉"
+  },
+  "Para todo (∀)": {
+    "prefix": "forall",
+    "body": "∀",
+    "description": "Para todo: ∀"
+  },
+  "Existe (∃)": {
+    "prefix": "exists",
+    "body": "∃",
+    "description": "Existe: ∃"
+  },
+  "No existe (∄)": {
+    "prefix": "notexists",
+    "body": "∄",
+    "description": "No existe: ∄"
+  },
+  "Conjunto vacío (∅)": {
+    "prefix": "emptyset",
+    "body": "∅",
+    "description": "Conjunto vacío: ∅"
+  },
+  "Infinito (∞)": {
+    "prefix": "infinity",
+    "body": "∞",
+    "description": "Infinito: ∞"
+  },
+  "Pi (π)": {
+    "prefix": "pi",
+    "body": "π",
+    "description": "Pi: π"
+  },
+  "Unión (∪)": {
+    "prefix": "union",
+    "body": "∪",
+    "description": "Unión: ∪"
+  },
+  "Intersección (⋂)": {
+    "prefix": "intersection",
+    "body": "⋂",
+    "description": "Intersección: ⋂"
+  },
+  "Cruz (⨉)": {
+    "prefix": "cross",
+    "body": "⨉",
+    "description": "Cruz: ⨉"
+  },
+  "Subconjunto (⊂)": {
+    "prefix": "subset",
+    "body": "⊂",
+    "description": "Subconjunto: ⊂"
+  },
+  "No igual (≠)": {
+    "prefix": "neq",
+    "body": "≠",
+    "description": "No igual: ≠"
+  },
+  "Y lógico (∧)": {
+    "prefix": "and",
+    "body": "∧",
+    "description": "Y lógico: ∧"
+  },
+  "O lógico (∨)": {
+    "prefix": "or",
+    "body": "∨",
+    "description": "O lógico: ∨"
+  },
+  "Negación (¬)": {
+    "prefix": "not",
+    "body": "¬",
+    "description": "Negación: ¬"
+  },
+  "Nabla (∇)": {
+    "prefix": "nabla",
+    "body": "∇",
+    "description": "Operador Nabla: ∇"
+  },
+  "Delta (∆)": {
+    "prefix": "delta",
+    "body": "∆",
+    "description": "Delta: ∆"
+  },
+  "Parcial (∂)": {
+    "prefix": "partial",
+    "body": "∂",
+    "description": "Parcial: ∂"
+  },
+  "Raíz cuadrada (√)": {
+    "prefix": "sqrt",
+    "body": "√(${1:expresion})",
+    "description": "Raíz cuadrada: √(expresion)"
+  },
+  "Coerción (>>)": {
+    "prefix": "cast",
+    "body": ">> ${1:Tipo}",
+    "description": "Coerción: >> Tipo"
+  },
+  "Función (fun)": {
+    "prefix": "fun",
+    "body": "fun ${1:nombre}(${2:params}) {\n\t${3:body}\n}",
+    "description": "Definición de función"
+  },
+  "Función a trozos": {
+    "prefix": "piecewise",
+    "body": "${1:nombre}(${2:x}) = {\n\t${3:expresion1} if ${4:condicion1},\n\t${5:expresion2} if ${6:condicion2},\n\t${7:expresion_default}\n}",
+    "description": "Función a trozos"
+  },
+  "Bucle while": {
+    "prefix": "while",
+    "body": "while (${1:condicion}) do {\n\t${2:body}\n}",
+    "description": "Bucle while"
+  },
+  "Bucle for (∀)": {
+    "prefix": "forall-loop",
+    "body": "∀ ${1:var} ∈ ${2:conjunto} do {\n\t${3:body}\n}",
+    "description": "Bucle para todo: ∀ var ∈ conjunto do { ... }"
+  },
+  "Retorno": {
+    "prefix": "return",
+    "body": "return ${1:valor}",
+    "description": "Retornar valor"
+  },
+  "Condicional if": {
+    "prefix": "if",
+    "body": "if (${1:condicion}) {\n\t${2:body}\n}",
+    "description": "Condicional if"
+  },
+  "Condicional if-else": {
+    "prefix": "ifelse",
+    "body": "if (${1:condicion}) {\n\t${2:body}\n} else {\n\t${3:body}\n}",
+    "description": "Condicional if-else"
+  },
+  "Importar módulo (use)": {
+    "prefix": "use",
+    "body": "use ${1:modulo}",
+    "description": "Importar módulo"
+  },
+  "Declarar un Objeto (object)": {
+    "prefix": "object",
+    "body": "object ${1:objectoNombre}",
+    "description": "Crear un objeto"
+  },
+  "Salida (Sys.out)": {
+    "prefix": "out",
+    "body": "Sys.out << ${1:valor}",
+    "description": "Salida por consola"
+  },
+  "Entrada (Sys.in)": {
+    "prefix": "in",
+    "body": "Sys.in >> ${1:variable}",
+    "description": "Entrada desde consola"
+  },
+  "Referencia (&)": {
+    "prefix": "ref",
+    "body": "&(${1:expresion})",
+    "description": "Referencia perezosa"
+  },
+  "Expresión simbólica": {
+    "prefix": "expr",
+    "body": "'${1:expresion}'",
+    "description": "Expresión simbólica"
+  },
+  "Evaluar (eval)": {
+    "prefix": "eval",
+    "body": "eval(${1:expresion}, ${2:asignaciones})",
+    "description": "Evaluar expresión simbólica"
+  }
+}

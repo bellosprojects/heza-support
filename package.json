@@ -1,0 +1,80 @@
+{
+  "name": "heza-support",
+  "displayName": "Heza Support",
+  "description": "Resaltado de sintaxis y ejecucion de archivos Heza",
+  "version": "0.0.2",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "icon": "./icons/new_heza_logo.ico",
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "heza",
+        "aliases": [
+          "Heza",
+          "heza"
+        ],
+        "extensions": [
+          ".hz"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "heza",
+        "scopeName": "source.heza",
+        "path": "./syntaxes/heza.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "heza",
+        "path": "./snippets/heza.code-snippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "heza.runScript",
+        "title": "Ejecutar script Heza",
+        "icon": "$(play)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "heza.runScript",
+        "key": "ctrl+f5",
+        "when": "editorLangId == heza"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "heza.runScript",
+          "group": "navigation",
+          "when": "editorLangId == heza"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "heza.runScript",
+          "group": "navigation",
+          "when": "resourceLangId == heza"
+        }
+      ]
+    }
+  },
+  "publisher": "bellosprojects",
+  "author": {
+    "name": "Bello's Projects",
+    "email": "bello.angel1505@gmail.com"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^10.1.0"
+  }
+}
