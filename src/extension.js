@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 import * as https from 'https';
+import * as url from 'url';
 import { LanguageClient } from 'vscode-languageclient/node';
 
 let client;

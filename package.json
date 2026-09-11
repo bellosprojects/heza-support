@@ -1,13 +1,38 @@
 {
   "name": "heza-support",
   "displayName": "Heza Support",
-  "description": "Resaltado de sintaxis y ejecucion de archivos Heza",
+  "description": "Soporte de lenguaje Heza para VS Code con resaltado, LSP, diagnosticos, autocompletado y ejecucion de scripts",
   "version": "0.0.2",
   "engines": {
     "vscode": "^1.110.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "heza",
+    "programming language",
+    "language server",
+    "lsp",
+    "mathematics",
+    "symbolic programming"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bellosprojects/heza-support.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bellosprojects/heza-support/issues"
+  },
+  "homepage": "https://github.com/bellosprojects/heza-support#readme",
+  "galleryBanner": {
+    "color": "#172033",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onLanguage:heza"
   ],
   "icon": "./icons/new_heza_logo.ico",
   "main": "./src/extension.js",

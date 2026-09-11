@@ -6,4 +6,6 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-- Initial release
+- Improve extension metadata and README documentation.
+- Document Python LSP setup, commands, features, screenshots, and support workflow.
+- Add a reproducible `requirements.txt` for the language server.

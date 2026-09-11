@@ -1,159 +1,134 @@
-# Heza Language Support
+# Heza Support para Visual Studio Code
 
-**Soporte oficial para el lenguaje de programación Heza en Visual Studio Code.**
+Soporte de lenguaje para [Heza](https://github.com/bellosprojects/Heza-Lang), un lenguaje de programación orientado a algoritmos, matemáticas y expresiones simbólicas.
 
-Heza es un lenguaje de programación de alto nivel que integra notación matemática nativa, diseñado para facilitar la expresión de algoritmos, modelos matemáticos y operaciones simbólicas. Esta extensión proporciona un entorno de desarrollo completo (LSP) con análisis estático, autocompletado inteligente, navegación y resaltado semántico, todo integrado en VS Code.
+[![Repositorio](https://img.shields.io/badge/GitHub-heza--support-181717?logo=github)](https://github.com/bellosprojects/heza-support)
+[![Lenguaje](https://img.shields.io/badge/language-Heza-5b8def)](https://github.com/bellosprojects/Heza-Lang)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.110%2B-007acc?logo=visualstudiocode)](https://code.visualstudio.com/)
 
----
+> Proyecto en desarrollo. La extensión puede instalarse desde un archivo `.vsix` mientras se prepara su publicación en el Marketplace.
 
-## ✨ Características
+## Qué aporta
 
-### 🔍 Análisis semántico y diagnóstico
-- **Validación en tiempo real**: errores léxicos, sintácticos y de uso de variables no declaradas o no leídas.
-- **Resaltado semántico** de identificadores (variables, funciones, objetos, parámetros).
-- **Detección de variables no utilizadas** (advertencias) y uso antes de declaración (errores).
+Heza Support convierte VS Code en un entorno de trabajo para archivos `.hz`: combina resaltado de sintaxis, un servidor de lenguaje Python y herramientas para ejecutar el programa sin salir del editor.
 
-### 🧠 Inteligencia contextual (LSP)
-- **Autocompletado** de:
-  - Símbolos locales y globales (variables, funciones, objetos).
-  - Atributos de objetos en cadenas anidadas (`obj.attr.subattr`).
-  - Módulos y rutas de archivos en sentencias `use` y `from`.
-  - Símbolos exportados de otros módulos (con importación selectiva).
-- **Definición**: navegación rápida a la declaración de funciones, objetos y variables (`Ctrl+Click` / `F12`).
-- **Hover**: información detallada sobre símbolos (tipo, firma, docstring extraído de comentarios).
-- **Ayuda de firma**: muestra parámetros y documentación al escribir llamadas a funciones.
+### Características principales
 
-### 📐 Sintaxis matemática nativa
-Heza permite escribir expresiones con operadores y símbolos Unicode comunes en matemáticas:
+| Área | Incluye |
+| --- | --- |
+| Edición | Detección automática de `.hz`, pares de brackets, comentarios con `~`, autocierre y selección envolvente |
+| Sintaxis | Resaltado de palabras clave, funciones, objetos, números, strings, comentarios y operadores matemáticos |
+| LSP | Diagnósticos en tiempo real, autocompletado contextual, hover, ayuda de firma, ir a definición, símbolos del documento y resaltado semántico |
+| Análisis | Identificadores no declarados, uso antes de la declaración y variables no utilizadas |
+| Matemáticas | `∑`, `∏`, `∫`, `∂`, `√`, `∀`, `∃`, `∈`, `∪`, `∩`, `→`, `¬`, `∧`, `∨` y más |
+| Productividad | Snippets para funciones, condicionales, bucles, objetos, módulos y expresiones matemáticas |
+| Ejecución | Comando **Ejecutar script Heza**, botón en el título del editor, menú contextual y `Ctrl+F5` |
 
-- `∑`, `∏`, `∫`, `∂`, `lim`, `∀`, `∃`, `∈`, `∉`, `∪`, `∩`, `→`, `¬`, `∧`, `∨`, etc.
-- Operadores aritméticos: `+`, `-`, `*`, `/`, `%`, `^`, `√`, `!` (factorial).
-- Comparadores: `==`, `≠`, `>`, `<`, `≥`, `≤`.
-- Coerción de tipos: `>>`.
-- Referencias perezosas: `&`.
-- Expresiones simbólicas entre comillas simples: `'x^2 + 3'`.
+## Instalación
 
-### 🧩 Estructuras de datos y control
-- **Conjuntos** `{ ... }`, **tuplas** `( ... )`, **rangos** `[from, to, step]`.
-- **Transformaciones** (comprensión de conjuntos con filtros): `{ expr | var ∈ conjunto, cond }`.
-- **Bucles**: `∀` (for-each), `while`.
-- **Condicionales**: `if`/`else` con anidamiento.
-- **Funciones** definidas por el usuario (`fun`) y **funciones a trozos**.
-- **Objetos** con atributos y herencia (declaración e instanciación).
-- **Módulos** mediante `use` y `from`.
+### Desde un `.vsix`
 
-### ⚙️ Integración con el ecosistema Heza
-- Ejecución de scripts desde el editor (comando `Heza: Run Script`).
-- Soporte para snippets con prefijos de notación matemática.
+1. Descarga el `.vsix` desde [Releases](https://github.com/bellosprojects/heza-support/releases).
+2. En VS Code abre la paleta (`Ctrl+Shift+P`).
+3. Selecciona **Extensions: Install from VSIX...** y elige el archivo.
 
----
+### Preparar el servidor de lenguaje
 
-## 📦 Instalación
+El servidor LSP está escrito en Python. Instala Python 3.8 o posterior y sus dependencias:
 
-### Desde el marketplace de VS Code (próximamente)
-1. Abre VS Code.
-2. Ve a Extensiones (`Ctrl+Shift+X`).
-3. Busca `Heza` e instala.
+```powershell
+python -m pip install -r requirements.txt
+```
 
-### Instalación manual (archivo `.vsix`)
-1. Descarga el archivo `.vsix` desde la sección de releases.
-2. Abre VS Code y ejecuta **Extensions: Install from VSIX...** desde la paleta de comandos.
-3. Selecciona el archivo descargado.
+La extensión busca primero un intérprete en `.venv\Scripts\python.exe`, después en `.env\Scripts\python.exe` y finalmente utiliza `python` del `PATH`. Para una instalación reproducible se recomienda crear un entorno virtual en la carpeta de la extensión:
 
-### Requisitos previos
-- **Python 3.8+** instalado en el sistema.
-- El intérprete de Python debe estar accesible desde la línea de comandos o configurado en el entorno virtual `.venv` / `.env` dentro del directorio de la extensión.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
----
+Para usar **Ejecutar script Heza**, el intérprete `heza` también debe estar instalado y disponible en el `PATH`. En Windows, la extensión ofrece descargar el instalador desde la última release de [Heza-Lang](https://github.com/bellosprojects/Heza-Lang/releases) si no lo encuentra.
 
-## 🚀 Uso básico
+## Primeros pasos
 
-### 1. Crear un archivo `.hz`
-Crea un archivo con extensión `.hz`. La extensión detectará automáticamente el lenguaje y activará las funciones LSP.
-
-### 2. Escribir código Heza
-Ejemplo de un programa simple que usa sumatoria y salida:
+1. Crea o abre un archivo con extensión `.hz`.
+2. Escribe `fun` o `summation` y selecciona un snippet.
+3. Pasa el cursor sobre un símbolo, usa `Ctrl+Click` para ir a su definición o escribe `(` para ver la firma.
+4. Ejecuta el archivo con `Ctrl+F5`, el botón de reproducción del editor o el comando **Ejecutar script Heza**.
 
 ```heza
 fun main() {
     conjunto = {1, 2, 3, 4, 5}
     suma = ∑(i ∈ conjunto, i^2)
-    Sys.out << suma   // imprime 55
+    Sys.out << suma
 }
 ```
 
-### 3. Ejecutar el script
-- Abre la paleta de comandos (`Ctrl+Shift+P`) y selecciona `Heza: Run Script`.
-- O usa el atajo configurado (si lo has asignado).
-- Se abrirá una terminal integrada mostrando la salida.
+## Ejemplos de Heza
 
-### 4. Explorar el código
-- **Autocompletado**: empieza a escribir un identificador y obtén sugerencias.
-- **Definición**: haz `Ctrl+Click` sobre una función o variable para saltar a su declaración.
-- **Hover**: pasa el ratón sobre cualquier símbolo para ver información de tipo y documentación.
+### Conjuntos, filtros y bucles
 
----
-
-## 🧪 Ejemplos de sintaxis destacada
-
-### Funciones y funciones a trozos
 ```heza
-fun factorial(n) {
-    if (n == 0) {
-        return 1
-    } else {
-        return n * factorial(n - 1)
-    }
-}
+pares = {n | n ∈ [0..10], n % 2 == 0}
 
-// Función a trozos (definida con asignación y llaves)
-f(x) = {
-    x^2 if x ≥ 0,
-    -x   if x < 0
+∀ i ∈ pares do {
+    Sys.out << i
 }
 ```
 
-### Conjuntos y transformaciones
-```heza
-pares = { n | n ∈ [0..10], n % 2 == 0 }
-// equivalente a {0, 2, 4, 6, 8, 10}
-```
+### Funciones, objetos y módulos
 
-### Bucles y condicionales
 ```heza
-∀ i ∈ [1..5] do {
-    if (i % 2 == 0) {
-        Sys.out << i
-    }
+fun distancia(x, y) {
+    return √(x^2 + y^2)
 }
-```
 
-### Objetos
-```heza
 object Punto {
     x = 0,
     y = 0
 }
 
-p = Punto { x = 3, y = 4 }
-Sys.out << p.x   // imprime 3
-```
-
-### Importación de módulos
-```heza
-// Importar todo el módulo con alias
 use "math" as math
-
-// Importar selectivamente
-use { sin, cos, ln } from "math"
 ```
 
----
+## Comandos y atajos
 
-## 📋 Comandos disponibles
+| Acción | Cómo usarla |
+| --- | --- |
+| Ejecutar el archivo Heza activo | `Ctrl+F5` |
+| Ejecutar el archivo Heza activo | Paleta de comandos → **Ejecutar script Heza** |
+| Ejecutar el archivo Heza activo | Menú contextual o botón de reproducción del editor |
 
-| Comando | Descripción |
-|---------|-------------|
-| `Heza: Run Script` | Ejecuta el archivo Heza activo en la terminal. |
+## Capturas recomendadas para la página del proyecto
 
----
+Las imágenes deben guardarse en una carpeta `media/` en la raíz del repositorio. Conviene usar PNG de 1280×720 o 1600×900, con el código ampliado y sin rutas de usuario, tokens ni datos personales.
+
+| Archivo sugerido | Qué debe mostrar | Dónde se usará |
+| --- | --- | --- |
+| `media/hero.png` | Un archivo `.hz` con resaltado matemático y el logo de Heza | Debajo del título, como imagen principal |
+| `media/diagnostics.png` | Un diagnóstico visible y el panel de problemas | Sección LSP y análisis |
+| `media/completion.png` | Autocompletado, hover o ayuda de firma | Sección de productividad |
+| `media/run-script.png` | `Ctrl+F5` y la salida en la terminal integrada | Sección de ejecución |
+| `media/marketplace-icon.png` | Logo cuadrado, idealmente PNG de 128×128 | Icono del Marketplace; reemplaza el `.ico` cuando se publique |
+
+Cuando existan, se pueden insertar así:
+
+```markdown
+![Diagnósticos de Heza](media/diagnostics.png)
+```
+
+## Estado y soporte
+
+Heza Support está evolucionando junto con el lenguaje Heza. Si encuentras un error o quieres proponer una mejora, abre un [issue](https://github.com/bellosprojects/heza-support/issues) incluyendo:
+
+- versión de VS Code y del sistema operativo;
+- versión de la extensión;
+- versión de Python y Heza;
+- un ejemplo mínimo que reproduzca el problema;
+- el mensaje del panel **Output** cuando corresponda.
+
+Consulta el [CHANGELOG](CHANGELOG.md) para conocer los cambios de cada versión.
+
+## Licencia
+
+La licencia del proyecto se publicará junto con la primera versión distribuida en el Marketplace.
