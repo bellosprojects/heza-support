@@ -26,6 +26,7 @@ from lsprotocol.types import (
     LogMessageParams,
     CompletionParams,
     CompletionItem,
+    CompletionItemLabelDetails,
     CompletionList,
     CompletionItemKind,
     CompletionOptions,
@@ -49,7 +50,7 @@ server = LanguageServer("heza-server", "v0.1")
 
 from parser import Parser, ParserError
 from lexer import Lexer, LexerError, get_all_id_tokens
-from symbols import get_all_symbols
+from symbols import get_all_symbols, get_all_symbols_from_external_module
 from scope import generate_scope_from_ast
 from types_inference import inferences_type, TYPE_CACHE
 
@@ -209,7 +210,7 @@ def validar_codigo(ls: LanguageServer, params):
     # Siempre publicamos, aunque la lista esté vacía (esto limpia los errores anteriores)
     ls.text_document_publish_diagnostics(PublishDiagnosticsParams(uri=text_doc.uri, diagnostics=diagnostics))
 
-@server.feature(TEXT_DOCUMENT_COMPLETION, CompletionOptions(trigger_characters=['.']))
+@server.feature(TEXT_DOCUMENT_COMPLETION, CompletionOptions(trigger_characters=['.', '"', '{', ',']))
 def proveer_autocompletado(ls: LanguageServer, params: CompletionParams):
 
     row = params.position.line + 1
@@ -218,66 +219,219 @@ def proveer_autocompletado(ls: LanguageServer, params: CompletionParams):
     uri = params.text_document.uri
     document = ls.workspace.get_text_document(uri)
 
-    global_scope = HEZA_GLOBAL_CACHE[uri]['scope']
-    scope_actual = global_scope.buscar_scope(row=row, col=col)
-    simbolos = scope_actual.obtener_simbolos_visibles()
+    file_info = HEZA_GLOBAL_CACHE.get(uri)
+    
+    if file_info:
+        global_scope = file_info['scope']
+
+    if not file_info:
+        return
+    
+    scope_actual = global_scope.buscar_scope(row=row, col=col) if global_scope else None
+    simbolos = scope_actual.obtener_simbolos_visibles() if scope_actual else {'variables': {}, 'funciones': {}, 'objetos': {}}
 
     items = []
 
     linea_texto = document.lines[row - 1]
-    text_hasta_cursor = linea_texto[:col - 1].strip()
+    linea_hasta_cursor_raw = linea_texto[:col - 1]
+    text_hasta_cursor = linea_hasta_cursor_raw.strip()
 
-    if text_hasta_cursor.endswith('.'):
+    import re
+    import os
+    from urllib.parse import urlparse, unquote
+    from lsprotocol.types import CompletionItemLabelDetails, TextEdit, Range, Position
 
-        import re
+    # =========================================================================
+    # EXTRACTOR DE RUTAS BASE (Centralizado para evitar sugerir el propio archivo)
+    # =========================================================================
+    parsed_uri = urlparse(uri)
+    nombre_archivo_actual = os.path.basename(unquote(parsed_uri.path))
+    base_dir = os.path.dirname(unquote(parsed_uri.path))
+    if base_dir.startswith('/') and os.name == 'nt':
+        base_dir = base_dir[1:] # Fix para rutas en Windows
 
-        match = re.search(r'([a-zA-Z_])\w*\.$', text_hasta_cursor)
+    # =========================================================================
+    # CONTEXTO A: Autocompletado de Rutas de Archivos (use "..." o from "...")
+    # =========================================================================
+    match_path = re.search(r'(?:use|from)\s+"([^"]*)$', linea_hasta_cursor_raw)
+    if match_path:
+        path_typed = match_path.group(1) # Ej: "modulos/util" o ""
+        
+        # Separamos el directorio base del prefijo que está escribiendo el usuario
+        dir_part = os.path.dirname(path_typed)
+        target_dir = os.path.abspath(os.path.join(base_dir, dir_part))
 
-        if match:
-
-            nombre_instancia = match.group(1)
-
-            instancias = []
-
-            if nombre_instancia in instancias:
-
-                nombre_objeto = instancias[nombre_instancia]
-
-                obj_node = simbolos['objetos'].get(nombre_objeto)
-
-                if obj_node:
-
-                    atributos = obj_node.get('attributes', {})
-
-                    for attr_name in atributos.keys():
+        if os.path.exists(target_dir) and os.path.isdir(target_dir):
+            try:
+                for entry in os.listdir(target_dir):
+                    # CORRECCIÓN: Ignoramos archivos ocultos Y el propio archivo actual
+                    if entry.startswith('.') or entry == nombre_archivo_actual: 
+                        continue
+                        
+                    full_entry_path = os.path.join(target_dir, entry)
+                    
+                    if os.path.isdir(full_entry_path):
                         items.append(CompletionItem(
-                            label=attr_name,
-                            kind=CompletionItemKind.Property,
-                            detail=f"Propiedad de {nombre_objeto}"
+                            label=entry,
+                            kind=CompletionItemKind.Folder,
+                            detail="Carpeta de módulos"
                         ))
+                    elif entry.endswith('.hz'):
+                        items.append(CompletionItem(
+                            label=entry.split('.hz')[0],
+                            kind=CompletionItemKind.Module,
+                            detail="Módulo Heza"
+                        ))
+            except Exception:
+                pass
+                
+        return CompletionList(is_incomplete=False, items=items)
 
-                else:
-                    return CompletionList(is_incomplete=False, items=[])
+    # =========================================================================
+    # CONTEXTO B: Autocompletado de Símbolos Selectivos ({ symbol1, ... })
+    # =========================================================================
+    match_braces = re.search(r'use\s*\{([^}]*)$', linea_hasta_cursor_raw)
+    if match_braces:
+        # Buscamos en toda la línea si ya existe la cláusula 'from "modulo"'
+        match_from = re.search(r'from\s+"([^"]+)"', linea_texto)
+        
+        if match_from:
+            # -----------------------------------------------------------------
+            # Caso B1: El usuario ya especificó el módulo al final
+            # -----------------------------------------------------------------
+            modulo_relativo = match_from.group(1)
+            try:
+                simbolos_modulo = get_all_symbols_from_external_module(modulo_relativo) 
+                for sym_name, sym_type in simbolos_modulo.items():
+                    items.append(CompletionItem(
+                        label=sym_name,
+                        kind=CompletionItemKind.Field,
+                        detail=f"Módulo: {modulo_relativo}",
+                        label_details=CompletionItemLabelDetails(
+                            description=" | ".join(sym_type)
+                        )
+                    ))
+            except Exception:
+                pass
+        else:
+            # -----------------------------------------------------------------
+            # Caso B2: NO hay módulo aún -> Escaneo recursivo (Estilo TypeScript)
+            # -----------------------------------------------------------------
+            try:
+                # Caminamos por el directorio actual y todas sus subcarpetas
+                for root, dirs, files in os.walk(base_dir):
+                    for file in files:
+                        # Solo procesamos otros archivos .hz (evitando el propio archivo)
+                        if file.endswith('.hz') and file != nombre_archivo_actual:
+                            full_file_path = os.path.join(root, file)
+                            
+                            # Calculamos la ruta relativa respecto a donde está el usuario
+                            rel_path = os.path.relpath(full_file_path, base_dir)
+                            # Normalizamos barras de Windows a barras de importación / y quitamos extensión
+                            rel_path_clean = rel_path.replace('\\', '/').rsplit('.hz', 1)[0]
+                            
+                            # Construimos el prefijo relativo limpio (ej: "./math" o "./utils/format")
+                            modulo_relativo = f"./{rel_path_clean}"
+                            
+                            # Obtenemos el diccionario { nombre: tipo } usando tu función
+                            simbolos_modulo = get_all_symbols_from_external_module(modulo_relativo)
+                            
+                            for sym_name, sym_type in simbolos_modulo.items():
+                                items.append(CompletionItem(
+                                    label=sym_name,
+                                    kind=CompletionItemKind.Field,
+                                    detail=f"Auto-importar desde {modulo_relativo}",
+                                    label_details=CompletionItemLabelDetails(
+                                        description=" | ".join(sym_type)
+                                    ),
+                                    # EL TRUCO: Modificamos el texto desde el cursor hasta el fin de la línea actual
+                                    text_edit=TextEdit(
+                                        range=Range(
+                                            start=Position(line=row - 1, character=col - 1),
+                                            end=Position(line=row - 1, character=len(linea_texto))
+                                        ),
+                                        # Inserta el símbolo, cierra la llave y escribe el origen automáticamente
+                                        new_text=f"{sym_name} }} from \"{modulo_relativo}\""
+                                    )
+                                ))
+            except Exception:
+                pass
+                
+        return CompletionList(is_incomplete=False, items=items)
 
-    elif global_scope:
+    # =========================================================================
+    # CONTEXTO C: Acceso a Atributos Aninados (obj.attr1.attr2)
+    # =========================================================================
+    if text_hasta_cursor.endswith('.') and scope_actual:
+        match = re.search(r'([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)\.$', text_hasta_cursor)
+        if match:
+            cadena_completa = match.group(1)
+            partes = cadena_completa.split('.')
 
+            base_name = partes[0]
+            current_types = inferences_type({"type": "id", "value": base_name}, scope_actual)
+            error_en_cadena = False
+
+            for attr_name in partes[1:]:
+                next_types = set()
+                for t in current_types:
+                    m = re.search(r'^object\[([a-zA-Z_]\w*)\]$', t)
+                    if m:
+                        class_name = m.group(1)
+                        
+                        # CAMBIO 1: Búsqueda profunda de la definición del objeto intermedio
+                        obj_def = scope_actual.buscar_objeto_definicion(class_name)
+                        if obj_def and isinstance(obj_def, dict):
+                            atributos = obj_def.get('attributes', {})
+                            if attr_name in atributos:
+                                attr_node = atributos[attr_name].get('value') if isinstance(atributos[attr_name], dict) else atributos[attr_name]
+                                tipos_atributo = inferences_type(attr_node, scope_actual)
+                                next_types = next_types.union(tipos_atributo)
+                if not next_types:
+                    error_en_cadena = True
+                    break
+                current_types = next_types
+
+            if not error_en_cadena:
+                for t in current_types:
+                    m = re.search(r'^object\[([a-zA-Z_]\w*)\]$', t)
+                    if m:
+                        class_name = m.group(1)
+                        
+                        # CAMBIO 2: Búsqueda profunda para obtener el objeto final y listar sus miembros
+                        obj_def = scope_actual.buscar_objeto_definicion(class_name)
+                        if obj_def and isinstance(obj_def, dict):
+                            atributos = obj_def.get('attributes', {})
+
+                            for final_attr_name, attr_info in atributos.items():
+                                nodo_atributo = attr_info.get('value') if isinstance(attr_info, dict) else attr_info
+                                tipos_inf = inferences_type(nodo_atributo, scope_actual)
+                                tipo_renderizado = " | ".join(tipos_inf)
+
+                                items.append(CompletionItem(
+                                    label=final_attr_name,
+                                    kind=CompletionItemKind.Property,
+                                    detail=f": {tipo_renderizado}",
+                                    label_details=CompletionItemLabelDetails(
+                                        description=f"de {class_name}"
+                                    )
+                                ))
+        return CompletionList(is_incomplete=False, items=items)
+
+    # =========================================================================
+    # CONTEXTO D: Ámbito General (Variables, Funciones y Objetos locales/globales)
+    # =========================================================================
+    elif scope_actual:
         for var_name in simbolos["variables"]:
             items.append(CompletionItem(
                 label=var_name,
                 kind=CompletionItemKind.Variable,
-                detail=f"Variable: { " | ".join(inferences_type(simbolos['variables'][var_name]['value'], scope_actual)) }"
+                detail=f"Variable: { ' | '.join(inferences_type(simbolos['variables'][var_name].get('value'), scope_actual)) }"
             ))
             
-        # --- FUNCIONES (Con Snippets) ---
         for func_name, func_node in simbolos["funciones"].items():
-            # Extraemos los parámetros del nodo
             params = func_node.get('params', func_node.get('args', []))
-            
-            # Para el tooltip visual: func(a, b)
             params_str = ", ".join(params)
-            
-            # Para el autocompletado en el código: func(${1:a}, ${2:b})
-            # Los ${1:nombre} son la sintaxis de Snippets para saltar con Tab
             snippet_args = ", ".join([f"${{{i+1}:{p}}}" for i, p in enumerate(params)])
             
             items.append(CompletionItem(
@@ -285,12 +439,10 @@ def proveer_autocompletado(ls: LanguageServer, params: CompletionParams):
                 kind=CompletionItemKind.Function,
                 detail=f"fun {func_name}({params_str})",
                 insert_text=f"{func_name}({snippet_args})",
-                insert_text_format=InsertTextFormat.Snippet  # ¡Esto activa la magia del Tab!
+                insert_text_format=InsertTextFormat.Snippet
             ))
             
-        # --- OBJETOS ---
         for obj_name, obj_node in simbolos["objetos"].items():
-            # Extraemos los nombres de los atributos para mostrarlos
             atributos = obj_node.get('attributes', {})
             attr_names = list(atributos.keys())
             attr_str = ",\n".join([f"\t{p} = ${{{i+1}:{p}}}" for i, p in enumerate(attr_names)])
@@ -298,7 +450,7 @@ def proveer_autocompletado(ls: LanguageServer, params: CompletionParams):
             items.append(CompletionItem(
                 label=obj_name,
                 kind=CompletionItemKind.Class,
-                detail=f"objetc: {obj_name}",
+                detail=f"object: {obj_name}",
                 documentation=f"Atributos:\n- " + "\n- ".join(attr_names) if attr_names else "Sin atributos",
                 insert_text=obj_name + (" {\n" + attr_str + "\n}" if len(attr_names) > 0 else ""),
                 insert_text_format=InsertTextFormat.Snippet
@@ -416,7 +568,6 @@ def proveer_definicion(ls: LanguageServer, params: DefinitionParams):
         
     scope_actual = global_scope.buscar_scope(row=row, col=col)
     simbolos = scope_actual.obtener_simbolos_visibles()
-    instancias = scope_actual.obtener_instancias_de_clases()
 
     nodo_destino = None
 
@@ -426,12 +577,6 @@ def proveer_definicion(ls: LanguageServer, params: DefinitionParams):
     # 2. ¿Es un objeto/clase?
     elif palabra_bajo_cursor in simbolos["objetos"]:
         nodo_destino = simbolos["objetos"][palabra_bajo_cursor]
-        
-    # 3. ¿Es una variable que resulta ser una instancia? 
-    # (Podemos hacer que salte a la definición de su Clase)
-    elif palabra_bajo_cursor in instancias:
-        nombre_objeto = instancias[palabra_bajo_cursor]
-        nodo_destino = simbolos["objetos"].get(nombre_objeto)
         
     # 4. ¿Es una variable local/global normal?
     elif palabra_bajo_cursor in simbolos["variables"]:
@@ -494,7 +639,10 @@ def proveer_hover(ls: LanguageServer, params: HoverParams):
     row = params.position.line + 1
     col = params.position.character + 1
     
-    global_scope = HEZA_GLOBAL_CACHE.get(uri)['scope']
+    file_info = HEZA_GLOBAL_CACHE.get(uri)
+    
+    if file_info:
+        global_scope = file_info['scope']
     if not global_scope: return None
 
     scope_actual = global_scope.buscar_scope(row=row, col=col)
@@ -530,7 +678,7 @@ def proveer_hover(ls: LanguageServer, params: HoverParams):
                 markdown_result += f"---\n{doc}"
 
     elif palabra_bajo_cursor in simbolos["variables"]:
-        markdown_result = f"#### Variable local: `{palabra_bajo_cursor}` \n---\n({" | ".join(inferences_type(simbolos['variables'][palabra_bajo_cursor]['value'], scope=scope_actual))})"
+        markdown_result = f"#### Variable local: `{palabra_bajo_cursor}` \n\n```heza\n{" | ".join(inferences_type(simbolos['variables'][palabra_bajo_cursor].get('value'), scope=scope_actual))}\n```\n"
 
     if markdown_result:
         return Hover(
@@ -554,7 +702,14 @@ def proveer_resaltado_semantico(ls: LanguageServer, params: SemanticTokensParams
     uri = params.text_document.uri
     source_code = ls.workspace.get_text_document(uri).source
 
-    tokens = Lexer(code=source_code).tokenize()
+    tokens = []
+
+    try:
+
+        tokens = Lexer(code=source_code).tokenize()
+
+    except Exception as _:
+        pass
 
     identificadores = get_all_id_tokens(tokens=tokens)
 
@@ -562,40 +717,45 @@ def proveer_resaltado_semantico(ls: LanguageServer, params: SemanticTokensParams
     linea_anterior = 0
     col_anterior = 0
 
-    global_scope = HEZA_GLOBAL_CACHE[uri]['scope']
+    file_info = HEZA_GLOBAL_CACHE.get(uri)
 
-    for _, nombre, fila, col in identificadores:
+    if file_info:
+        
+        global_scope = file_info['scope']
 
-        linea_actual = fila - 1
-        col_actual = col - 1
-        longitud = len(nombre)
 
-        scope_actual = global_scope.buscar_scope(row=linea_actual + 1, col=col_actual + 1)
-        if not scope_actual:
-            scope_actual = global_scope
+        for _, nombre, fila, col in identificadores:
 
-        simbolos = scope_actual.obtener_simbolos_visibles()
-        tipo_token = -1
+            linea_actual = fila - 1
+            col_actual = col - 1
+            longitud = len(nombre)
 
-        if nombre in simbolos["funciones"]:
-            tipo_token = TOKENS_TYPES.index('function')
-        elif nombre in simbolos["objetos"]:
-            tipo_token = TOKENS_TYPES.index('class')
-        elif nombre in simbolos["variables"]:
-            tipo_token = TOKENS_TYPES.index('variable')
+            scope_actual = global_scope.buscar_scope(row=linea_actual + 1, col=col_actual + 1)
+            if not scope_actual:
+                scope_actual = global_scope
 
-        if tipo_token != -1:
-            delta_linea = linea_actual - linea_anterior
+            simbolos = scope_actual.obtener_simbolos_visibles()
+            tipo_token = -1
 
-            if delta_linea > 0:
-                delta_col = col_actual
-            else:
-                delta_col = col_actual - col_anterior
+            if nombre in simbolos["funciones"]:
+                tipo_token = TOKENS_TYPES.index('function')
+            elif nombre in simbolos["objetos"]:
+                tipo_token = TOKENS_TYPES.index('class')
+            elif nombre in simbolos["variables"]:
+                tipo_token = TOKENS_TYPES.index('variable')
 
-            data.extend([delta_linea, delta_col, longitud, tipo_token, 0])
+            if tipo_token != -1:
+                delta_linea = linea_actual - linea_anterior
 
-            linea_anterior = linea_actual
-            col_anterior = col_actual
+                if delta_linea > 0:
+                    delta_col = col_actual
+                else:
+                    delta_col = col_actual - col_anterior
+
+                data.extend([delta_linea, delta_col, longitud, tipo_token, 0])
+
+                linea_anterior = linea_actual
+                col_anterior = col_actual
 
     return SemanticTokens(data=data)
 
@@ -621,6 +781,9 @@ def al_pedir_simbolos(ls: LanguageServer, params: DocumentSymbolParams):
         symbols = get_all_symbols(ast=ast)
 
         return symbols
+    
+    except (ParserError, LexerError) as _:
+        pass
 
     except Exception as e:
         import traceback

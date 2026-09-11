@@ -2,57 +2,133 @@ FUNCIONES_NATIVAS = {
     'rand': {
         "type": "builtin_function",
         "params": ["min", "max"],
-        "docstring": "Número aleatorio entre min y max (incluyendo extremos)."
+        "docstring": "Número aleatorio entre min y max (incluyendo extremos).",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'sin': {
         "type": "builtin_function",
         "params": ["x"],
-        "docstring": "Calcula el seno de un ángulo x expresado en radianes."
+        "docstring": "Calcula el seno de un ángulo x expresado en radianes.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'cos': {
         "type": "builtin_function",
         "params": ["x"],
-        "docstring": "Calcula el coseno de un ángulo x expresado en radianes."
+        "docstring": "Calcula el coseno de un ángulo x expresado en radianes.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'tan': {
         "type": "builtin_function",
         "params": ["x"],
-        "docstring": "Calcula la tangente de un ángulo x expresado en radianes."
+        "docstring": "Calcula la tangente de un ángulo x expresado en radianes.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'ln': {
         "type": "builtin_function",
         "params": ["x"],
-        "docstring": "Calcula el logaritmo natural de un ángulo x expresado en radianes."
+        "docstring": "Calcula el logaritmo natural de un ángulo x expresado en radianes.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'exp': {
         "type": "builtin_function",
         "params": ["x"],
-        "docstring": "Calcula el exponencial de un ángulo x expresado en radianes."
+        "docstring": "Calcula el exponencial de un ángulo x expresado en radianes.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "number",
+                "value": 0
+            }]
+        }]
     },
     'pressed': {
         "type": "builtin_function",
         "params": ["key"],
-        "docstring": "Detecta de la tecla key esta presionada en el instante de la llamada."
+        "docstring": "Detecta de la tecla key esta presionada en el instante de la llamada.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "bool",
+                "value": True
+            }]
+        }]
     },
     'sleep': {
         "type": "builtin_function",
         "params": ["ms"],
-        "docstring": "Duerme el programa ms milisegundos. Devuelve null."
+        "docstring": "Duerme el programa ms milisegundos. Devuelve null.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "null"
+            }]
+        }]
     },
     'lim': {
         "type": "builtin_function",
         "params": ["expr", "var -> value"],
-        "docstring": "Evalua el limite cuando la variable var de expr tiende a value."
+        "docstring": "Evalua el limite cuando la variable var de expr tiende a value.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "expresion",
+                "value": "x"
+            }]
+        }]
     },
     "d": {
         "type": "builtin_function",
         "params": ["expr"],
-        "docstring": "Evalua la derivada simbolica de expr."
+        "docstring": "Evalua la derivada simbolica de expr.",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "expresion",
+                "value": "x"
+            }]
+        }]
     },
     "eval": {
         "type": "builtin_function",
         "params": ["expr", "var = value"],
-        "docstring": "Evalua expr sustituyendo var por value"
+        "docstring": "Evalua expr sustituyendo var por value",
+        "body": [{
+            "type": "return",
+            "values": [{
+                "type": "expresion",
+                "value": "x"
+            }]
+        }]
     }
 }
 
@@ -110,13 +186,22 @@ class Scope:
     def buscar_simbolo(self, nombre: str):
 
         if nombre in self.variables:
-            return self.variables[nombre]
+            return {
+                "type": "variable",
+                "value": self.variables[nombre]
+            }
         
         if nombre in self.funciones:
-            return self.funciones[nombre]
+            return {
+                "type": "function",
+                "value": self.funciones[nombre]
+            }
         
         if nombre in self.objetos:
-            return self.objetos[nombre]
+            return {
+                "type": "object",
+                "value": self.objetos[nombre]
+            }
         
         if self.parent:
 
@@ -167,6 +252,101 @@ class Scope:
 
         return simbolos
     
+    def obtener_instancias(self):
+        # Importación local para evitar dependencia circular con types_inference
+        from types_inference import inferences_type
+        import re
+
+        instancias = {}
+
+        for var_name, var_data in self.obtener_simbolos_visibles()['variables'].items():
+            if not var_data or not isinstance(var_data, dict) or 'value' not in var_data:
+                continue
+            
+            val_node = var_data['value']
+            if not val_node:
+                continue
+
+            # Dejamos que el motor de inferencia nos diga el tipo real del nodo
+            tipos_inferidos = inferences_type(node=val_node, scope=self)
+
+            for t in tipos_inferidos:
+                # Buscamos si el string de tipo empareja con "object[NombreObjeto]"
+                match = re.search(r'^object\[([a-zA-Z_]\w*)\]$', t)
+                if match:
+                    instancias[var_name] = match.group(1)
+                    break # Encontrado el tipo de objeto base
+
+        return instancias
+    
+    def buscar_objeto_definicion(self, nombre_objeto: str) -> dict | None:
+        simbolos = self.obtener_simbolos_visibles()
+        declared_objects = simbolos.get('objetos', {})
+
+        # 1. Buscar en la raíz de los objetos visibles
+        if nombre_objeto in declared_objects:
+            obj = declared_objects[nombre_objeto]
+            if isinstance(obj, dict) and 'value' in obj:
+                return obj['value']
+            return obj
+
+        # 2. Buscar dentro de los atributos de módulos/pseudo-objetos
+        for obj_name, obj_data in declared_objects.items():
+            atributos = obj_data.get('attributes', {})
+            if nombre_objeto in atributos:
+                attr_node = atributos[nombre_objeto]
+                if isinstance(attr_node, dict) and 'value' in attr_node:
+                    return attr_node['value']
+                return attr_node
+
+        return None
+    
+    def obtener_root(self):
+
+        if not self.parent:
+            return self
+        
+        return self.parent.obtener_root()
+    
+from lexer import Lexer
+from parser import Parser
+
+def get_symbols_from_use(module_name: str) -> dict:
+    try:
+        module_name += ".hz"
+        file_ = open(module_name, "r", encoding="UTF-8")
+        code = file_.read()
+
+        tokens = Lexer(code=code).tokenize()
+        ast, _, _ = Parser(tokens=tokens).parse_program()
+
+        symbols : dict = {}
+
+        for inst in ast.get('program', []):
+            tipo = inst.get('type')
+
+            if tipo == 'object_declaration':
+                symbols[inst.get('name', 'anonimo')] = {
+                    'value': inst
+                }
+            elif tipo in ('fun', 'function'):
+                symbols[inst.get('name', 'anonima')] = {
+                    'value': inst
+                }
+            elif tipo == 'asignacion':
+                # También extraemos las variables globales que declare el módulo
+                vars_ = [lvalue for lvalue in inst.get('lvalues', []) if lvalue.get("type", None) == "id"]
+                value = inst.get("value", None) if len(vars_) == 1 else None
+                for var in vars_:
+                    var_name = var.get("value")
+                    if var_name:
+                        symbols[var_name] = {
+                            'value': value
+                        }
+        return symbols
+    except Exception as e:
+        return {}
+
 import math
 
 def generate_scope_from_ast(ast: list, mini_scopes: list = None) -> Scope:
@@ -240,6 +420,48 @@ def generate_scope_from_ast(ast: list, mini_scopes: list = None) -> Scope:
                         "columna": var.get("columna", None),
                         "value": value
                     })
+
+        elif tipo == 'use':
+            module_name = node.get('module')
+            alias = node.get('alias')
+
+            if module_name:
+                attributes = get_symbols_from_use(module_name=module_name)
+
+                if alias:
+                    # CASO A: Importación con alias (módulos como objetos)
+                    objecto = {
+                        'type': 'object_declaration',
+                        'name': module_name,
+                        'attributes': attributes,
+                    }
+                    scope_actual.add_object(nombre=module_name, objeto=objecto)
+                    scope_actual.add_variable(nombre=alias, variable={
+                        'value': {
+                            'type': 'id',
+                            'value': module_name
+                        }
+                    })
+                
+        elif tipo == 'selectiveUse':  # <--- ¡TYPO CORREGIDO AQUÍ!
+            module_name = node.get('module')
+            symbols = node.get('symbols')
+
+            if module_name and symbols:
+                attributes = get_symbols_from_use(module_name=module_name)
+
+                for attr, attr_node in attributes.items():
+                    if attr in symbols:
+                        inner_node = attr_node.get('value', {})
+                        inner_type = inner_node.get('type')
+
+                        # Guardamos cada símbolo en su contenedor correspondiente
+                        if inner_type in ('fun', 'function'):
+                            scope_actual.add_funcion(attr, inner_node)
+                        elif inner_type == 'object_declaration':
+                            scope_actual.add_object(attr, inner_node)
+                        else:
+                            scope_actual.add_variable(attr, attr_node)
 
         elif tipo == 'for':
 
@@ -341,7 +563,9 @@ def generate_scope_from_ast(ast: list, mini_scopes: list = None) -> Scope:
             for var in iterator_vars:
                 nuevo_mini_scope.add_variable(
                     nombre=var,
-                    variable=None
+                    variable={
+                        
+                    }
                 )
 
             parent_scope.children.append(nuevo_mini_scope)

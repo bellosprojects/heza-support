@@ -179,13 +179,17 @@ class Parser:
         left = self.parse_unary_operation_logic()
         while self.current_token is not None and self.current_token[0] in ['AND','OR','THEN']:
             op = str(self.current_token[0]).lower()
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_unary_operation_logic()
             left = {
                 'type': 'binaryOperation',
                 'operation': op,
                 'leftValue': left,
-                'rightValue': right
+                'rightValue': right,
+                'fila': fila,
+                'columna': columna
             }
         return left
     
@@ -203,11 +207,15 @@ class Parser:
 
         if self.current_token and self.current_token[0] == 'NOT':
             self.advance()
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             value = self.parse_binary_operation_relational()
             return {
                 'type': "unaryOperation",
                 'operation': 'not',
-                'value': value
+                'value': value,
+                'fila': fila,
+                'columna': columna
             }
         return self.parse_binary_operation_relational()
     
@@ -239,13 +247,17 @@ class Parser:
                 'DEL': 'del'
             }
             op = convertion_table[self.current_token[0]]
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_binary_operation_add_sub()
             left = {
                     'type':'binaryOperation',
                     'operation':op,
                     'leftValue':left,
-                    'rightValue':right
+                    'rightValue':right,
+                    'fila': fila,
+                    'columna': columna
                     }
         return left
     
@@ -253,13 +265,17 @@ class Parser:
         left = self.parse_binary_operation_mul_div_mod()
         while self.current_token and self.current_token[0] in ['SUMA','RESTA']:
             op =  'add' if self.current_token[0] == 'SUMA' else 'sub'
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_binary_operation_mul_div_mod()
             left = {
                     'type':'binaryOperation',
                     'operation':op,
                     'leftValue':left,
-                    'rightValue':right
+                    'rightValue':right,
+                    'fila': fila,
+                    'columna': columna
                     }
         return left
     
@@ -272,13 +288,17 @@ class Parser:
                 'MOD': 'mod'
             }
             op = convertion_table[self.current_token[0]]
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_unary_operation_aritmetic()
             left = {
                     'type':'binaryOperation',
                     'operation':op,
                     'leftValue':left,
-                    'rightValue':right
+                    'rightValue':right,
+                    'fila': fila,
+                    'columna': columna
                     }
         return left
     
@@ -291,12 +311,16 @@ class Parser:
                 'SQRT': 'sqrt'
             }
             op = convertion_table[self.current_token[0]]
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             expr = self.parse_binary_operation_pow()
             return {
                     'type':'unaryOperation',
                     'operation':op,
-                    'value':expr
+                    'value':expr,
+                    'fila': fila,
+                    'columna': columna
                     }
         else:
             return self.parse_binary_operation_pow()
@@ -304,13 +328,17 @@ class Parser:
     def parse_binary_operation_pow(self):
         left = self.parse_binary_operation_sets()
         while self.current_token is not None and self.current_token[0] == 'POW':
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_binary_operation_sets()
             left = {
                     'type':'binaryOperation',
                     'operation':'pow',
                     'leftValue':left,
-                    'rightValue':right
+                    'rightValue':right,
+                    'fila': fila,
+                    'columna': columna
                     }
         return left
 
@@ -325,19 +353,25 @@ class Parser:
             }
             
             op = convertion_table[self.current_token[0]]
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_convertions()
             left = {
                     'type':'binaryOperation',
                     'operation':op,
                     'leftValue':left,
-                    'rightValue':right
+                    'rightValue':right,
+                    'fila': fila,
+                    'columna': columna
                     }
         return left
     
     def parse_convertions(self):
         left = self.parse_parentesis()
         while self.current_token is not None and self.current_token[0] == 'PIPE':
+            fila = self.current_token[2]
+            columna = self.current_token[3]
             self.advance()
             right = self.parse_parentesis()
             left = {
@@ -448,10 +482,6 @@ class Parser:
             self.advance()
             node = {"type": "indeterminate"}
             return self.parse_postfix(node)
-
-        elif self.current_token[0] == 'TRACE':
-            self.advance()
-            return self.parse_trace()  # trace ya es un valor completo
 
         elif self.current_token[0] == 'ARROBA':
             self.advance()
@@ -571,8 +601,8 @@ class Parser:
             self.error("Se esperaba un valor para fromValue en Rango")
         fromValue = self.parse_expresion()
 
-        if not self.current_token or self.current_token[0] != 'COMA':
-            self.error("Se esperaba , despues de fromValue en Rango")
+        if not self.current_token or self.current_token[0] != 'DPUNTO':
+            self.error("Se esperaba .. despues de fromValue en Rango")
         self.advance()
 
         if not self.current_token:
@@ -1691,24 +1721,72 @@ class Parser:
 
     def parse_use(self):
 
-        if not self.current_token or self.current_token[0] != 'ID':
-            self.error("Se esperaban uno o mas nombres de modulos a importar despues de use")
+        if not self.current_token:
+            self.error("Se espeaba un modulo para importar en use")
 
-        modulos = []
+        if self.current_token[0] == 'TEXT':
 
-        while self.current_token and self.current_token[0] == 'ID':
-            modulo = self.current_token[1]
-            modulos.append(modulo)
+            module_name = self.current_token[1]
             self.advance()
 
-            if not self.current_token or self.current_token[0] != 'COMA':
-                break
+            if not self.current_token or self.current_token[0] != 'AS':
+                self.error(f"Se esperaba 'as' y un alias para el modulo {module_name}")
+
             self.advance()
 
-        return {
-            'type': 'use',
-            'modules': modulos
-        }
+            if not self.current_token or self.current_token[0] != 'ID':
+                self.error(f"Se esperaba un alias para el modulo {module_name} despues de as")
+            
+            alias = self.current_token[1]
+            self.advance()
+
+            return {
+                'type': 'use',
+                'module': module_name,
+                'alias': alias
+            }
+
+        elif self.current_token[0] == 'OPENL':
+            self.advance()
+
+            symbols = []
+
+            while self.current_token:
+
+                if not self.current_token or self.current_token[0] != 'ID':
+                    self.error(f"Se esperaba un identificador para importar despues de use {{")
+
+                sym = self.current_token[1]
+                self.advance()
+
+                symbols.append(sym)
+
+                if not self.current_token or self.current_token[0] != 'COMA':
+                    break
+                self.advance()
+
+            if not self.current_token or self.current_token[0] != 'CLOSEL':
+                self.error(f"Se esperaba }} despues de la importacion")
+            self.advance()
+
+            if not self.current_token or self.current_token[0] != 'FROM':
+                self.error("Se esperaba from despues de } en use")
+            self.advance()
+
+            if not self.current_token or self.current_token[0] != 'TEXT':
+                self.error("Se esperaba un modulo a importar despues de from")
+
+            module_name = self.current_token[1]
+            self.advance()
+
+            return {
+                'type': 'selectiveUse',
+                'module': module_name,
+                'symbols': symbols
+            }
+
+        else:
+            self.error(f"El token {self.current_token[1]} no se esperaba despues de use")
     
     def parse_object_declaration(self):
 

@@ -31,7 +31,7 @@ tokens = [
     ('CROSS', r'⨉'),
     
     #Patrones
-    ('NUMBER', r'\d+(\.\d+)?'),
+    ('NUMBER', r'\d+(\.\d+)?([eE][+-]\d+)?'),
     ('TEXT', r'"([^"]*)"'),
     ('EXPRESION', r"'([^']*)'"),
 
@@ -121,7 +121,9 @@ keyword = [
     'fun',
     'do',
     'stop',
-    'object'
+    'object',
+    'from',
+    'as'
 ]
 
 #Constantes

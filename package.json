@@ -75,6 +75,10 @@
     "email": "bello.angel1505@gmail.com"
   },
   "dependencies": {
+    "vsce": "^1.103.1",
     "vscode-languageclient": "^10.1.0"
+  },
+  "allowScripts": {
+    "keytar@7.9.0": true
   }
 }
