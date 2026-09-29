@@ -32,8 +32,16 @@
     "color": "#172033",
     "theme": "dark"
   },
-  "icon": "./icons/new_heza_logo.ico",
-  "main": "./src/extension.js",
+  "icon": "icons/new_heza_logo.ico",
+  "main": "./dist/extension.cjs",
+  "scripts": {
+    "bundle": "esbuild ./src/extension.js --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.cjs",
+    "vscode:prepublish": "npm run bundle"
+  },
+  "activationEvents": [
+    "onLanguage:heza",
+    "onCommand:heza.runScript"
+  ],
   "contributes": {
     "languages": [
       {
@@ -97,10 +105,11 @@
     "name": "Bello's Projects",
     "email": "bello.angel1505@gmail.com"
   },
-  "dependencies": {
+  "devDependencies": {
     "@vscode/vsce": "^4.0.0",
     "pnpm": "^12.8.1",
     "vsce": "^1.25.1",
+    "esbuild": "^0.25.0",
     "vscode-languageclient": "^10.1.0"
   },
   "allowScripts": {
