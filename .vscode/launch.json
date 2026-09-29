@@ -5,6 +5,8 @@
       "name": "Run Heza Support Extension",
       "type": "extensionHost",
       "request": "launch",
+      "preLaunchTask": "npm: build",
+      "timeout": 30000,
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ]

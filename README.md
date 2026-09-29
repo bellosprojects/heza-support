@@ -89,13 +89,14 @@ use "math" as math
 
 ## Desarrollo y depuración
 
-La extensión ejecuta el servidor LSP compilado; quienes instalan la extensión no necesitan Python. Para depurar desde el código fuente:
+La extensión ejecuta el servidor LSP compilado; quienes instalan la extensión no necesitan Python. Para depurar desde el código fuente o crear el paquete de Windows:
 
 1. Instala las dependencias de la extensión con `npm install`.
 2. Instala Python y las dependencias de compilación: `python -m pip install -r requirements.txt pyinstaller`.
-3. Abre el proyecto en VS Code y selecciona **Run Heza Support Extension** en **Run and Debug**. La tarea previa compila el servidor con PyInstaller.
+3. Abre el proyecto en VS Code y selecciona **Run Heza Support Extension** en **Run and Debug**. La tarea previa compila el bundle de la extensión y el servidor con PyInstaller.
+4. Para crear un VSIX, ejecuta `npm run build` y luego `npx @vscode/vsce package`. El hook de preempaquetado también ejecuta la compilación automáticamente.
 
-El paquete de Windows debe incluir `server/dist/HezaLSP.exe`. Para revisar errores del servidor, abre **Output > Heza Language Server**.
+El VSIX de Windows debe incluir `server/dist/HezaLSP.exe`; la compilación genera ese archivo antes del empaquetado. Para revisar errores del servidor, abre **Output > Heza Language Server**.
 
 
 ## Estado y soporte

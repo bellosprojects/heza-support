@@ -36,7 +36,9 @@
   "main": "./dist/extension.cjs",
   "scripts": {
     "bundle": "esbuild ./src/extension.js --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.cjs",
-    "vscode:prepublish": "npm run bundle"
+    "build:server": "cd server && python -m PyInstaller --noconfirm --clean HezaLSP.spec",
+    "build": "npm run bundle && npm run build:server",
+    "vscode:prepublish": "npm run build"
   },
   "activationEvents": [
     "onLanguage:heza",
