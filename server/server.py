@@ -21,7 +21,6 @@ from lsprotocol.types import (
     Position,
     ShowMessageParams,
     MessageType,
-    PublishDiagnosticsParams,
     DocumentSymbolParams,
     LogMessageParams,
     CompletionParams,
@@ -208,7 +207,7 @@ def validar_codigo(ls: LanguageServer, params):
         ls.window_log_message(LogMessageParams(type=MessageType.Error, message=f"Error en validación: {traceback.format_exc()}"))
 
     # Siempre publicamos, aunque la lista esté vacía (esto limpia los errores anteriores)
-    ls.text_document_publish_diagnostics(PublishDiagnosticsParams(uri=text_doc.uri, diagnostics=diagnostics))
+    ls.publish_diagnostics(text_doc.uri, diagnostics)
 
 @server.feature(TEXT_DOCUMENT_COMPLETION, CompletionOptions(trigger_characters=['.', '"', '{', ',']))
 def proveer_autocompletado(ls: LanguageServer, params: CompletionParams):
