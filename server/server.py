@@ -1,6 +1,6 @@
 from typing import Dict
 import traceback
-from pygls.lsp.server import LanguageServer
+from pygls.server  import LanguageServer
 from lsprotocol.types import (
     TEXT_DOCUMENT_DID_OPEN,
     TEXT_DOCUMENT_DID_CHANGE,
