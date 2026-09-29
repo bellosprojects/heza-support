@@ -2,7 +2,7 @@
   "name": "heza-support",
   "displayName": "Heza Support",
   "description": "Soporte de lenguaje Heza para VS Code con resaltado, LSP, diagnosticos, autocompletado y ejecucion de scripts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -97,6 +97,8 @@
     "email": "bello.angel1505@gmail.com"
   },
   "dependencies": {
+    "@vscode/vsce": "^4.0.0",
+    "pnpm": "^12.8.1",
     "vsce": "^1.103.1",
     "vscode-languageclient": "^10.1.0"
   },
