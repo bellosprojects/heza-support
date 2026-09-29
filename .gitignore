@@ -4,3 +4,6 @@ node_modules
 .vscode
 *.pyc
 __pycache__
+*.hz
+server/build/
+server/dist/

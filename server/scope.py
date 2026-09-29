@@ -476,7 +476,7 @@ def generate_scope_from_ast(ast: list, mini_scopes: list = None) -> Scope:
             vars_names = node.get('vars', [])
 
             for var in vars_names:
-                nuevo_scope.add_variable(var, None)
+                nuevo_scope.add_variable(var, {})
 
             for hijo in node.get('body', []):
                 _procesar_nodo(hijo, nuevo_scope)

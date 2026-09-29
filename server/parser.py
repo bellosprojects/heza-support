@@ -806,6 +806,29 @@ class Parser:
             "value": values
         }
 
+    def parse_parameters(self) -> list[str]:
+
+        parameters = []
+
+        while self.current_token and self.current_token[0] != 'CLOSEP':
+
+            if self.current_token[0] != 'ID':
+                self.error('Se esperaba un identificador')
+            param = self.current_token[1]
+            self.advance()
+
+            parameters.append(param)
+
+            if not self.current_token or self.current_token[0] != 'COMA':
+                break
+            self.advance()
+
+        if not self.current_token or self.current_token[0] != 'CLOSEP':
+            self.error("Se esperaba ) para cerrar la lista de parametros")
+        self.advance()
+
+        return parameters
+
 
     def parse_transformation(self):
         
@@ -827,17 +850,23 @@ class Parser:
             "value": True
         }
 
-        while self.current_token and self.current_token[0] == 'ID':
-            var = self.current_token[1]
-            t_vars.append(var)
-            self.advance()
+        while self.current_token and (self.current_token[0] == 'ID' or self.current_token[0] == 'OPENP'):
+
+            if self.current_token[0] == 'OPENP':
+                self.advance()
+                in_vars = self.parse_parameters()
+                t_vars.extend(in_vars)
+            else:
+                var = self.current_token[1]
+                t_vars.append(var)
+                self.advance()
 
             if not self.current_token or self.current_token[0] != 'IN':
                 self.error("Se esperaba ∈ espues de la variable en transformation")
             self.advance()
 
             if not self.current_token or self.current_token[0] not in ExpresionValues:
-                self.error(f"Se esperaba un valor como el conjunto de la variable {var}")
+                self.error(f"Se esperaba un valor como el conjunto de la variable")
             set = self.parse_expresion()
             sets.append(set)
 
@@ -858,9 +887,6 @@ class Parser:
         fila_end = self.current_token[2]
         columna_end = self.current_token[3]
         self.advance()
-
-        if len(t_vars) != len(sets):
-            self.error("La cantidad de conjuntos es distinta a la cantidad de variables en transformation")
 
         self.mini_scopes.append({
             "vars": t_vars,

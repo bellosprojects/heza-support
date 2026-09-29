@@ -12,7 +12,6 @@ const REPO_OWNER = "bellosprojects";
 const REPO_NAME = "Heza-Lang";
 const MAX_REDIRECTS = 5;
 
-// Función para seguir redirecciones y obtener la URL final de descarga
 function followRedirects(downloadUrl, redirectCount = 0) {
     return new Promise((resolve, reject) => {
         if (redirectCount > MAX_REDIRECTS) {
@@ -27,13 +26,12 @@ function followRedirects(downloadUrl, redirectCount = 0) {
         https.get(downloadUrl, options, (response) => {
             const status = response.statusCode || 0;
             if (status >= 300 && status < 400 && response.headers.location) {
-                // Seguir redirección
                 const location = response.headers.location;
                 const nextUrl = location.startsWith('http') ? location : url.resolve(downloadUrl, location);
                 console.log(`Redirigiendo a: ${nextUrl}`);
                 followRedirects(nextUrl, redirectCount + 1).then(resolve, reject);
             } else if (status === 200) {
-                resolve(downloadUrl); // URL final
+                resolve(downloadUrl);
             } else {
                 reject(new Error(`Código de estado HTTP ${status} al intentar descargar.`));
             }
@@ -222,21 +220,11 @@ export function activate(context) {
 
     context.subscriptions.push(runFileCommand);
 
-    const serverModule = context.asAbsolutePath(path.join('server', 'server.py'));
-
-    let pythonExecutable = 'python'; 
-    const venvPath = context.asAbsolutePath(path.join('.', '.venv', 'Scripts', 'python.exe'));
-    const envPath = context.asAbsolutePath(path.join('.', '.env', 'Scripts', 'python.exe'));
-
-    if (fs.existsSync(venvPath)) {
-        pythonExecutable = venvPath;
-    } else if (fs.existsSync(envPath)) {
-        pythonExecutable = envPath;
-    }
+    const serverModule = context.asAbsolutePath(path.join('server', 'dist', 'HezaLSP.exe'));
 
     const serverOptions = {
-        command: pythonExecutable,
-        args: [serverModule]
+        command: serverModule,
+        args: []
     };
 
     const clientOptions = {
