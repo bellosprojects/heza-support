@@ -5,4 +5,6 @@ vsc-extension-quickstart.md
 node_modules/**
 server/__pycache__/**
 server/build/**
+!server/dist/
+!server/dist/HezaLSP.exe
 .env/**
