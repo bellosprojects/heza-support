@@ -87,6 +87,16 @@ use "math" as math
 | --- | --- |
 | Ejecutar el archivo Heza activo | `Ctrl+F5` |
 
+## Desarrollo y depuración
+
+La extensión ejecuta el servidor LSP compilado; quienes instalan la extensión no necesitan Python. Para depurar desde el código fuente:
+
+1. Instala las dependencias de la extensión con `npm install`.
+2. Instala Python y las dependencias de compilación: `python -m pip install -r requirements.txt pyinstaller`.
+3. Abre el proyecto en VS Code y selecciona **Run Heza Support Extension** en **Run and Debug**. La tarea previa compila el servidor con PyInstaller.
+
+El paquete de Windows debe incluir `server/dist/HezaLSP.exe`. Para revisar errores del servidor, abre **Output > Heza Language Server**.
+
 
 ## Estado y soporte
 

@@ -1,7 +1,9 @@
 node_modules
 *.vsix
 .env
-.vscode
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 *.pyc
 __pycache__
 *.hz

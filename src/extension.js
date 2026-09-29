@@ -222,6 +222,13 @@ export function activate(context) {
 
     const serverModule = context.asAbsolutePath(path.join('server', 'dist', 'HezaLSP.exe'));
 
+    if (!fs.existsSync(serverModule)) {
+        vscode.window.showErrorMessage(
+            `No se encontro el ejecutable del servidor Heza: ${serverModule}.`
+        );
+        return;
+    }
+
     const serverOptions = {
         command: serverModule,
         args: []
@@ -230,7 +237,7 @@ export function activate(context) {
     const clientOptions = {
         documentSelector: [{ scheme: 'file', language: 'heza' }],
         synchronize: {
-            fileEvents: vscode.workspace.createFileSystemWatcher('**/*.heza')
+            fileEvents: vscode.workspace.createFileSystemWatcher('**/*.hz')
         },
         trace: 'verbose' 
     };

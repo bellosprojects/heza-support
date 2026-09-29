@@ -3,6 +3,7 @@
   "displayName": "Heza Support",
   "description": "Soporte de lenguaje Heza para VS Code con resaltado, LSP, diagnosticos, autocompletado y ejecucion de scripts",
   "version": "0.0.5",
+  "type": "module",
   "engines": {
     "vscode": "^1.110.0"
   },

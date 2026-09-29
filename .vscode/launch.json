@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Heza Support Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "preLaunchTask": "Build Heza language server",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ]
+    }
+  ]
+}

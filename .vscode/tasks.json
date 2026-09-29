@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Heza language server",
+      "type": "process",
+      "command": "python",
+      "args": [
+        "-m",
+        "PyInstaller",
+        "--clean",
+        "--noconfirm",
+        "HezaLSP.spec"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
